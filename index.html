@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Online Ukulele Tuner</title>
+    <link href='http://fonts.googleapis.com/css?family=Raleway' rel='stylesheet' type='text/css'>
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <style>
+        body,
+        html {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            font: 14pt 'Raleway', sans-serif;
+            background-image: url("img/wood.png");
+            text-align: center;
+        }
+
+        #note {
+            font-size: 140px;
+        }
+
+        div.confident,
+        div.vague {
+            color: white;
+        }
+
+        #note {
+            display: inline-block;
+            height: 180px;
+            text-align: left;
+        }
+
+        #detector {
+            text-align: center;
+            padding-top: 10px;
+        }
+
+        #output {
+            width: 300px;
+            height: 42px;
+        }
+
+        #flat {
+            display: none;
+        }
+
+        #sharp {
+            display: none;
+        }
+
+        .flat #flat {
+            display: inline;
+        }
+
+        .sharp #sharp {
+            display: inline;
+        }
+
+        .header {
+            font-size: 70px;
+            color: white;
+            border-bottom: 4px solid white;
+            width: 60%;
+            display: inline-block;
+        }
+
+        .settings {
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            display: inline-block;
+            position: absolute;
+            cursor: pointer;
+        }
+
+        /* Notes */
+        .ukulele {
+            position: relative;
+            background-image: url("img/ukulele.png");
+            background-repeat: no-repeat;
+            background-position: center;
+            width: 602px;
+            height: 571px;
+            display: inline-block;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tune {
+            position: absolute;
+            font-size: 85px;
+            color: white;
+        }
+
+        .tune1 {
+            top: 220px;
+            left: -53px;
+        }
+
+        .tune1 img {
+            padding: 0 20px 15px 0;
+        }
+
+        .tune2 {
+            top: 70px;
+            left: -53px;
+        }
+
+        .tune2 img {
+            padding: 0 20px 15px 0;
+        }
+
+        .tune3 {
+            top: 70px;
+            right: -60px;
+        }
+
+        .tune3 img {
+            padding: 0 0 15px 20px;
+        }
+
+        .tune4 {
+            top: 220px;
+            right: -60px;
+        }
+
+        .tune4 img {
+            padding: 0 0 15px 20px;
+        }
+
+        .footer {
+            background-color: white;
+            padding: 15px 0;
+            margin: -4px 0 0 0;
+        }
+
+    </style>
+</head>
+
+<body>
+<!--<img class="settings" data-toggle="modal" data-target="#myModal" src="img/settings.png"/>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h2 class="modal-title">Settings</h2>
+            </div>
+            <div class="modal-body">
+                <h4>Tuning</h4>
+                <select>
+                    <option value="standard">Standard Tuning - GCEA</option>
+                    <option value="baritone">Baritone - DGBE</option>
+                </select>
+            </div>
+            <!-- <div class="modal-footer">
+                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                 <button type="button" class="btn btn-primary">Save changes</button>
+             </div>
+        </div>
+    </div>
+</div>-->
+
+<h1 class="header">Ukulele Tuner Online</h1>
+<div id="detector" class="vague">
+    <div style="display: none" class="pitch"><span id="pitch">--</span>Hz</div>
+    <div class="note"><span id="note">--</span></div>
+    <canvas style="display: none" id="output" width=300 height=42></canvas>
+    <div style="display: none" id="detune"><span id="detune_amt">--</span><span id="flat">cents &#9837;</span><span
+            id="sharp">cents &#9839;</span></div>
+</div>
+
+<div class="ukulele">
+    <h1 style="cursor: pointer" onclick="play(this)" id="tune1" class="tune1 tune"><img src="img/speaker.png">G</h1>
+    <h1 style="cursor: pointer" onclick="play(this)" id="tune2" class="tune2 tune"><img src="img/speaker.png">C</h1>
+    <h1 style="cursor: pointer" onclick="play(this)" id="tune3" class="tune3 tune">E<img src="img/speaker.png"></h1>
+    <h1 style="cursor: pointer" onclick="play(this)" id="tune4" class="tune4 tune">A<img src="img/speaker.png"></h1>
+</div>
+
+<div class="sounds">
+    <audio id="g" src="notes/G.mp3"></audio>
+    <audio id="c" src="notes/C.mp3"></audio>
+    <audio id="e" src="notes/E.mp3"></audio>
+    <audio id="a" src="notes/A.mp3"></audio>
+</div>
+<div class="footer">
+    <p>&copy; William Baum 2017</p>
+    <hr>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSefm1-FyNREEkA0v88zv40Gg0Qws_FHz6DVZvvbLuRjtgQ99g/viewform?usp=sf_link" target="_blank">Feedback</a>
+    <p>Created by <a href="http://www.william-baum.com">William Baum</a></p>
+</div>
+
+<script src="js/jquery.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/pitchdetect.js"></script>
+<script>
+    // Audio Elements
+    var g = document.getElementById("g");
+    var c = document.getElementById("c");
+    var e = document.getElementById("e");
+    var a = document.getElementById("a");
+
+    function play(note) {
+        noteid = note.getAttribute("id");
+        console.log(noteid);
+
+        if (noteid == "tune1") {
+            g.play();
+            console.log("playing G");
+        }
+
+        else if (noteid == "tune2") {
+            c.play();
+            console.log("playing c");
+        }
+
+        else if (noteid == "tune3") {
+            e.play();
+            console.log("playing e");
+        }
+
+        else if (noteid == "tune4") {
+            a.play();
+            console.log("playing a");
+        } else {
+            alert("If you are seeing this, I screwed up");
+        }
+    }
+</script>
+</body>
+
+</html>
